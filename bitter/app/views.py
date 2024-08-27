@@ -82,3 +82,12 @@ def update(request, pk):
         TO.save()
         return HttpResponse('Done')
     return render(request, 'update.html', d)
+
+
+@login_required
+def delete(request, pk):
+    TO = Tweet.objects.get(pk=pk)
+    if TO.username.username == request.session.get('username'):
+        TO.delete()
+        return HttpResponseRedirect(reverse('home'))
+    return HttpResponse("You can't Delete some others Tweet")
