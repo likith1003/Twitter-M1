@@ -18,3 +18,11 @@ class Tweet(models.Model):
 
     def __str__(self):
         return self.text[:10]
+
+
+class Saved(models.Model):
+    username = models.ForeignKey(User, on_delete=models.CASCADE)
+    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.username.username+'  '+self.tweet.text[:10]

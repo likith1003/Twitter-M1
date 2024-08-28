@@ -72,17 +72,19 @@ def create_tweet(request):
 
 @login_required
 def update(request, pk):
-    TO = Tweet.objects.get(pk=pk)
-    d = {'TO':TO}
-    if request.method == 'POST' and request.FILES:
-        if TO.photo:
-            os.remove(TO.photo.path)
-        TO.text = request.POST.get('text')
-        TO.photo = request.FILES.get('photo')
-        TO.save()
-        return HttpResponse('Done')
-    return render(request, 'update.html', d)
 
+    TO = Tweet.objects.get(pk=pk)
+    if TO.username.username == request.session.get('username'):
+        d = {'TO':TO}
+        if request.method == 'POST' and request.FILES:
+            if TO.photo:
+                os.remove(TO.photo.path)
+            TO.text = request.POST.get('text')
+            TO.photo = request.FILES.get('photo')
+            TO.save()
+            return HttpResponse('Done')
+        return render(request, 'update.html', d)
+    return HttpResponse('You cant Update others tweet')
 
 @login_required
 def delete(request, pk):
@@ -91,3 +93,28 @@ def delete(request, pk):
         TO.delete()
         return HttpResponseRedirect(reverse('home'))
     return HttpResponse("You can't Delete some others Tweet")
+
+
+def save(request, pk):
+    un = request.session.get('username')
+    UO = User.objects.get(username=un)
+    TO = Tweet.objects.get(pk =pk)
+    ASTO = Saved.objects.filter(tweet=TO)
+
+    if ASTO and ASTO[0].username.username == un:
+        ASTO.delete()
+        return HttpResponseRedirect(reverse('saved')) 
+    else:
+        if TO.username.username != request.session.get('username'):
+            STO = Saved(username=UO, tweet=TO)
+            STO.save()
+            return HttpResponseRedirect(reverse('saved'))
+    return HttpResponse('You can"t Save Your Tweets' )
+
+
+def saved(request):
+    un = request.session.get('username')
+    UO = User.objects.get(username=un)
+    saved_tweets = Saved.objects.filter(username=UO)
+    d = {'tweets' : saved_tweets}
+    return render(request, 'saved.html',d)
