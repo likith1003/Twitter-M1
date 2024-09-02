@@ -40,7 +40,7 @@ class Liked(models.Model):
 
 class Comment(models.Model):
     username = models.ForeignKey(User, on_delete=models.CASCADE)
-    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE)
+    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE, related_name='comments')
     comment = models.CharField(max_length=50)
 
     def __str__(self):
