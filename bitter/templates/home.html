@@ -60,6 +60,9 @@ Home
     <div class="col-sm-4">
       <div class="card">
         <div class="card-body">
+          {% for cmt in tweet.comments.all %}<h6>
+            {{cmt.comment}}<span style="opacity: 0.5;">----- {{cmt.username.username}}</span>
+          </h6> {% endfor %}
           <form action="{% url 'comment' tweet.pk %}" method="POST">
             {% csrf_token %}
             <input type="text" name="cmt" id="cmt" placeholder="Your Comment....">
