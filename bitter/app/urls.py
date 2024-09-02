@@ -8,6 +8,10 @@ urlpatterns = [
     path('user_login', user_login, name='user_login'),
     path('user_logout', user_logout, name='user_logout'),
     path('create_tweet', create_tweet, name='create_tweet'),
+    path('saved', saved, name='saved'),
     path('update<pk>', update, name='update'),
-    path('delete<pk>', delete, name='delete')
+    path('delete<pk>', delete, name='delete'),
+    path('save<pk>', save, name='save'),
+    path('like<pk>', like, name='like'),
+    path('comment<pk>', comment, name='comment')
 ]

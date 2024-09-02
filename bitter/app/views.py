@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate,login, logout
 import os
+import datetime
 
 # Create your views here.
 
@@ -13,8 +14,11 @@ def home(request):
     un = request.session.get('username')
     if un:
         UO = User.objects.get(username=un)
+        PO = Profile.objects.filter(username=UO)
+        if PO:
+            PO=PO[0]
         tweets = Tweet.objects.all()
-        d = {'tweets': tweets, 'UO': UO}
+        d = {'tweets': tweets, 'UO': UO, 'PO':PO}
         return render(request, 'home.html', d)
     tweets = Tweet.objects.all()
     d = {'tweets': tweets}
@@ -22,14 +26,19 @@ def home(request):
 
 def register(request):
     ERFO = UserForm()
-    d = {'ERFO': ERFO}
-    if request.method == 'POST':
+    EPFO = ProfileForm()
+    d = {'ERFO': ERFO, 'EPFO': EPFO}
+    if request.method == 'POST'  and request.FILES:
         UFDO = UserForm(request.POST)
-        if UFDO.is_valid():
+        PFDO = ProfileForm(request.POST, request.FILES)
+        if UFDO.is_valid() and PFDO.is_valid():
             pw = UFDO.cleaned_data.get('password')
             MUFDO = UFDO.save(commit=False)
             MUFDO.set_password(pw)
             MUFDO.save()
+            MPFDO = PFDO.save(commit=False)
+            MPFDO.username=MUFDO
+            MPFDO.save()
             return HttpResponseRedirect(reverse('user_login'))
         return HttpResponse('Invalid Data')
     return render(request, 'register.html', d)
@@ -64,6 +73,7 @@ def create_tweet(request):
         if UO:
             MTFDO = TFDO.save(commit=False)
             MTFDO.username = UO
+            MTFDO.created_at = datetime.datetime.now()
             MTFDO.save()
             return HttpResponseRedirect(reverse('home'))
         return HttpResponse('Invalid Info')
@@ -72,17 +82,19 @@ def create_tweet(request):
 
 @login_required
 def update(request, pk):
-    TO = Tweet.objects.get(pk=pk)
-    d = {'TO':TO}
-    if request.method == 'POST' and request.FILES:
-        if TO.photo:
-            os.remove(TO.photo.path)
-        TO.text = request.POST.get('text')
-        TO.photo = request.FILES.get('photo')
-        TO.save()
-        return HttpResponse('Done')
-    return render(request, 'update.html', d)
 
+    TO = Tweet.objects.get(pk=pk)
+    if TO.username.username == request.session.get('username'):
+        d = {'TO':TO}
+        if request.method == 'POST' and request.FILES:
+            if TO.photo:
+                os.remove(TO.photo.path)
+            TO.text = request.POST.get('text')
+            TO.photo = request.FILES.get('photo')
+            TO.save()
+            return HttpResponse('Done')
+        return render(request, 'update.html', d)
+    return HttpResponse('You cant Update others tweet')
 
 @login_required
 def delete(request, pk):
@@ -91,3 +103,58 @@ def delete(request, pk):
         TO.delete()
         return HttpResponseRedirect(reverse('home'))
     return HttpResponse("You can't Delete some others Tweet")
+
+
+@login_required
+def save(request, pk):
+    un = request.session.get('username')
+    UO = User.objects.get(username=un)
+    TO = Tweet.objects.get(pk =pk)
+    ASTO = Saved.objects.filter(tweet=TO)
+
+    if ASTO and ASTO[0].username.username == un:
+        ASTO.delete()
+        return HttpResponseRedirect(reverse('saved')) 
+    else:
+        if TO.username.username != request.session.get('username'):
+            STO = Saved(username=UO, tweet=TO)
+            STO.save()
+            return HttpResponseRedirect(reverse('saved'))
+    return HttpResponse('You can"t Save Your Tweets' )
+
+
+@login_required
+def saved(request):
+    un = request.session.get('username')
+    UO = User.objects.get(username=un)
+    saved_tweets = Saved.objects.filter(username=UO)
+    d = {'tweets' : saved_tweets}
+    return render(request, 'saved.html',d)
+
+
+@login_required
+def like(request, pk):
+    TO = Tweet.objects.get(pk=pk)
+    UO = User.objects.get(username=request.session.get('username'))
+    LO = Liked.objects.filter(username=UO, tweet=TO)
+    if LO:
+        TO.likes -= 1
+        TO.save()
+        LO.delete()
+    else:
+        TO.likes += 1
+        TO.save()
+        LO = Liked(username=UO, tweet=TO)
+        LO.save()
+    return HttpResponseRedirect(reverse('home'))
+
+
+
+def comment(request, pk):
+    if request.method == 'POST':
+        cmt = request.POST.get('cmt')
+        UO = User.objects.get(username=request.session.get('username'))
+        TO = Tweet.objects.get(pk=pk)
+        CO = Comment(username=UO, tweet=TO, comment=cmt)
+        CO.save()
+    return HttpResponseRedirect(reverse('home'))

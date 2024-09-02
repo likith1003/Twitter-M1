@@ -6,9 +6,10 @@
 
 <center>
     <h1>register</h1>
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ERFO.as_p}}
+        {{EPFO.as_p}}
         <input type="submit" value="Register">
     </form>
 </center>{% endblock body %}

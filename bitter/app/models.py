@@ -14,7 +14,34 @@ class Tweet(models.Model):
     username = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
     photo = models.ImageField(upload_to="tweet_photos/")
-    created_at = models.DateField(auto_now_add=True)
+    created_at = models.DateField()
+    likes = models.IntegerField(default=0)
 
     def __str__(self):
         return self.text[:10]
+
+
+class Saved(models.Model):
+    username = models.ForeignKey(User, on_delete=models.CASCADE)
+    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.username.username+'  '+self.tweet.text[:10]
+    
+
+class Liked(models.Model):
+    username = models.ForeignKey(User, on_delete=models.CASCADE)
+    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.username.username+'  '+self.tweet.text[:10]
+    
+
+
+class Comment(models.Model):
+    username = models.ForeignKey(User, on_delete=models.CASCADE)
+    tweet = models.ForeignKey(Tweet, on_delete=models.CASCADE)
+    comment = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.username.username+'  '+self.comment
